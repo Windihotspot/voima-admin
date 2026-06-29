@@ -510,18 +510,7 @@
             <font-awesome-icon icon="fa-solid fa-sync-alt" class="mr-2" />Convert to Client
           </v-btn>
         </template>
-        <template v-if="drawerMode === 'assessment' && drawerItemId">
-          <v-btn
-            color="success"
-            variant="flat"
-            size="small"
-            @click="
-              openReview('publish', { assessment_id: drawerItemId, company_name: 'this client' })
-            "
-          >
-            <font-awesome-icon icon="fa-solid fa-globe" class="mr-2" />Publish Assessment
-          </v-btn>
-        </template>
+        <!-- Assessment actions are now handled inside AssessmentReviewPanel -->
       </template>
     </ClientDetailDrawer>
 
@@ -535,6 +524,14 @@
       :consultants="consultants"
       :loading="reviewDialog.loading"
       @confirm="handleReviewConfirm"
+    />
+
+    <!-- ── ASSESSMENT REVIEW PANEL ── -->
+    <AssessmentReviewPanel
+      v-model="reviewPanelOpen"
+      :assessment-id="reviewPanelAssessmentId"
+      @published="handlePublished"
+      @updated="loadData"
     />
 
     <!-- Snackbar -->
@@ -555,6 +552,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useClients } from '@/composables/useClients'
 import ClientDetailDrawer from '@/components/clients/ClientsDetailDrawer.vue'
 import AdminReviewDialog from '@/components/clients/AdminReviewDialog.vue'
+import AssessmentReviewPanel from '@/components/clients/AssessmentReviewPanel.vue'
 
 // ── tiny local empty state ──────────────────────────────
 const EmptyState = {
@@ -601,6 +599,8 @@ const consultants = ref<{ id: string; full_name: string }[]>([])
 const drawerOpen = ref(false)
 const drawerMode = ref<'application' | 'assessment'>('application')
 const drawerItemId = ref<string | null>(null)
+const reviewPanelOpen = ref(false)
+const reviewPanelAssessmentId = ref<string | null>(null)
 
 const reviewDialog = ref({
   open: false,
@@ -732,7 +732,10 @@ async function loadData() {
     applicationItems.value = data
     totalCount.value = data[0]?.total_count ?? 0
   } else if (activeTab.value === 'under_review') {
-    const data = await fetchAssessments({ ...params, status: params.status ?? 'under_review' })
+    const data = await fetchAssessments({
+      ...params,
+      status: params.status ?? undefined // remove the hardcoded status
+    })
     assessmentItems.value = data
     totalCount.value = data[0]?.total_count ?? 0
   } else if (activeTab.value === 'published') {
@@ -766,9 +769,23 @@ function switchTab(key: string) {
 
 // ── Drawer ────────────────────────────────────────────────
 function openDrawer(mode: 'application' | 'assessment', id: string) {
-  drawerMode.value = mode
-  drawerItemId.value = id
-  drawerOpen.value = true
+  if (mode === 'assessment') {
+    // Under Review + Published: open full review panel
+    reviewPanelAssessmentId.value = id
+    reviewPanelOpen.value = true
+  } else {
+    // Application: keep original drawer
+    drawerMode.value = mode
+    drawerItemId.value = id
+    drawerOpen.value = true
+  }
+}
+
+async function handlePublished() {
+  showSnack('Assessment published and client notified', 'success')
+  reviewPanelOpen.value = false
+  await loadData()
+  await loadCounts()
 }
 
 // ── Review dialog ──────────────────────────────────────────
