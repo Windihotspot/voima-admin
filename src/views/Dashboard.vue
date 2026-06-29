@@ -877,6 +877,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.v-btn {
+  text-transform: none;
+}
 .clients-page {
   min-height: 100vh;
   background: rgb(var(--v-theme-background));
