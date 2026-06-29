@@ -668,14 +668,15 @@ const statusOptions = computed(() => {
       { label: 'Rejected', value: 'rejected' }
     ]
   }
-  return [
-    { label: 'In Progress', value: 'in_progress' },
-    { label: 'Completed', value: 'completed' },
-    { label: 'Under Review', value: 'under_review' },
-    { label: 'Published', value: 'published' }
-  ]
+  if (activeTab.value === 'under_review') {
+    return [
+      { label: 'Completed', value: 'completed' },
+      { label: 'Under Review', value: 'under_review' }
+    ]
+  }
+  // published tab
+  return [{ label: 'Published', value: 'published' }]
 })
-
 // ── Table headers ─────────────────────────────────────────
 const waitlistHeaders = [
   { title: 'Company', key: 'company_name', sortable: true, width: 220 },
@@ -734,7 +735,7 @@ async function loadData() {
   } else if (activeTab.value === 'under_review') {
     const data = await fetchAssessments({
       ...params,
-      status: params.status ?? undefined // remove the hardcoded status
+      status: statusFilter.value ?? 'under_review' // always default to 'under_review'
     })
     assessmentItems.value = data
     totalCount.value = data[0]?.total_count ?? 0
