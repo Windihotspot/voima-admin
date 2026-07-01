@@ -7,13 +7,13 @@
     class="client-detail-drawer m-4"
   >
     <!-- Header -->
-    <div class="drawer-header px-6 py-4 d-flex align-center justify-space-between">
+    <div class="drawer-header text-white px-6 py-4 d-flex align-center justify-space-between">
       <div>
-        <p class="text-caption text-medium-emphasis mb-1 text-uppercase tracking-wide">
+        <!-- <p class="text-white mb-1 tracking-wide">
           {{ headerLabel }}
-        </p>
-        <h3 class="text-h6 font-weight-bold text-white">{{ title }}</h3>
-        <p v-if="subtitle" class="text-caption text-medium-emphasis mt-1">{{ subtitle }}</p>
+        </p> -->
+        <h3 class="text-white font-weight-bold text-white">{{ title }}</h3>
+        <p v-if="subtitle" class="text-white mt-1">{{ subtitle }}</p>
       </div>
       <v-btn icon variant="text" color="white" @click="$emit('update:modelValue', false)">
         <font-awesome-icon icon="fa-solid fa-xmark" />
@@ -660,6 +660,7 @@ function actionStatusColor(status: string) {
 }
 
 .drawer-header {
+  color: white;
   background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, #4a2c8f 100%);
   flex-shrink: 0;
 }
@@ -720,8 +721,6 @@ function actionStatusColor(status: string) {
 }
 
 .doc-row {
-  background: rgba(var(--v-theme-surface-variant), 0.5);
-  border: 1px solid rgba(var(--v-theme-outline), 0.2);
 }
 
 .doc-icon {

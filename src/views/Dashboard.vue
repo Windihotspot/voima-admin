@@ -26,25 +26,33 @@
       </div>
 
       <!-- Tab bar -->
-      <div class="lifecycle-tabs mt-4">
-        <button
-          v-for="tab in tabs"
-          :key="tab.key"
-          class="lifecycle-tab"
-          :class="{ active: activeTab === tab.key }"
-          @click="switchTab(tab.key)"
-        >
+      <!-- Tab bar -->
+      <v-tabs
+        v-model="activeTab"
+        color="primary"
+        show-arrows
+        class="lifecycle-tabs-v mt-4"
+        @update:model-value="onTabChange"
+      >
+        <v-tab v-for="tab in tabs" :key="tab.key" :value="tab.key" class="lifecycle-tab-v">
           <div class="tab-icon-wrap">
             <font-awesome-icon :icon="tab.icon" />
           </div>
           <div class="tab-content">
             <span class="tab-label">{{ tab.label }}</span>
-            <span class="tab-desc">{{ tab.desc }}</span>
+            <span class="tab-desc d-none d-sm-inline-block">{{ tab.desc }}</span>
           </div>
-          <div class="tab-badge" v-if="tab.badgeCount > 0">{{ tab.badgeCount }}</div>
-          <div class="tab-connector" v-if="tab.key !== 'published'" />
-        </button>
-      </div>
+          <v-chip
+            v-if="tab.badgeCount > 0"
+            size="x-small"
+            color="error"
+            class="ml-2"
+            variant="flat"
+          >
+            {{ tab.badgeCount }}
+          </v-chip>
+        </v-tab>
+      </v-tabs>
     </div>
 
     <!-- Toolbar -->
@@ -869,6 +877,12 @@ function scoreColor(score: number | null) {
   return '#B71C1C'
 }
 
+function onTabChange(key: any) {
+  page.value = 1
+  statusFilter.value = null
+  loadData()
+}
+
 // ── Init ──────────────────────────────────────────────────
 onMounted(() => {
   loadCounts()
@@ -877,6 +891,72 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@media (max-width: 600px) {
+  /* ── Vuetify tabs override ── */
+  .lifecycle-tabs-v {
+    border: 1px solid rgba(var(--v-theme-outline), 0.2);
+    border-radius: 14px;
+    background: #c8d2f5;
+    padding: 4px;
+  }
+
+  .lifecycle-tabs-v :deep(.v-tab) {
+    text-transform: none;
+    border-radius: 10px;
+    min-width: unset;
+    padding: 10px 16px;
+    gap: 10px;
+    color: rgba(var(--v-theme-on-surface), 0.6);
+    letter-spacing: normal;
+  }
+
+  .lifecycle-tabs-v :deep(.v-tab--selected) {
+    color: rgb(var(--v-theme-primary));
+  }
+
+  .lifecycle-tabs-v :deep(.v-slide-group__content) {
+    gap: 4px;
+  }
+
+  /* hide default slider, keep our own pill look via active bg */
+  .lifecycle-tabs-v :deep(.v-tab__slider) {
+    display: none;
+  }
+
+  .lifecycle-tabs-v :deep(.v-tab--selected .v-btn__overlay) {
+    background: rgb(var(--v-theme-surface));
+    opacity: 1;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  }
+
+  /* nav arrows */
+  .lifecycle-tabs-v :deep(.v-slide-group__prev),
+  .lifecycle-tabs-v :deep(.v-slide-group__next) {
+    min-width: 32px;
+    flex: 0 0 32px;
+  }
+
+  @media (max-width: 600px) {
+    .lifecycle-tabs-v :deep(.v-tab) {
+      padding: 8px 10px;
+    }
+    .tab-label {
+      font-size: 0.72rem;
+    }
+  }
+  .tab-desc {
+    display: none;
+  }
+  .tab-label {
+    font-size: 0.7rem;
+  }
+  .tab-icon-wrap {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+}
 .v-btn {
   text-transform: none;
 }
