@@ -600,6 +600,64 @@
                     >
                       {{ Math.round(mod.module_score ?? 0) }}%
                     </div>
+                    <v-chip
+                      size="x-small"
+                      :color="moduleReviewDrafts[mod.module_id]?.is_published ? 'success' : 'grey'"
+                      variant="tonal"
+                      class="ml-2"
+                    >
+                      {{
+                        moduleReviewDrafts[mod.module_id]?.is_published
+                          ? 'Module Published'
+                          : 'Not Published'
+                      }}
+                    </v-chip>
+                  </div>
+
+                  <div class="q-module-review" v-if="moduleReviewDrafts[mod.module_id]">
+                    <v-textarea
+                      v-model="moduleReviewDrafts[mod.module_id].notes"
+                      label="Module review note"
+                      variant="outlined"
+                      density="compact"
+                      rows="2"
+                      auto-grow
+                      hide-details
+                    />
+                    <div class="d-flex gap-2 mt-2">
+                      <v-btn
+                        size="x-small"
+                        variant="outlined"
+                        color="primary"
+                        :loading="savingModuleIds.has(mod.module_id)"
+                        @click="
+                          saveModuleReview(
+                            mod.module_id,
+                            moduleReviewDrafts[mod.module_id].is_published
+                          )
+                        "
+                      >
+                        Save Note
+                      </v-btn>
+                      <v-btn
+                        size="x-small"
+                        variant="flat"
+                        :color="moduleReviewDrafts[mod.module_id].is_published ? 'grey' : 'success'"
+                        :loading="savingModuleIds.has(mod.module_id)"
+                        @click="
+                          saveModuleReview(
+                            mod.module_id,
+                            !moduleReviewDrafts[mod.module_id].is_published
+                          )
+                        "
+                      >
+                        {{
+                          moduleReviewDrafts[mod.module_id].is_published
+                            ? 'Unpublish Module'
+                            : 'Publish Module'
+                        }}
+                      </v-btn>
+                    </div>
                   </div>
 
                   <div
@@ -642,6 +700,124 @@
                           q.response_notes
                         }}
                       </p>
+                      <div class="q-evidence-row">
+                        <v-chip
+                          v-if="q.evidence_request"
+                          size="x-small"
+                          :color="evidenceStatusColor(q.evidence_request.status)"
+                          variant="tonal"
+                        >
+                          <font-awesome-icon icon="fa-solid fa-paperclip" class="mr-1" />
+                          Evidence: {{ q.evidence_request.status }}
+                        </v-chip>
+                        <v-btn
+                          size="x-small"
+                          variant="text"
+                          color="primary"
+                          @click="openRequestEvidence(q)"
+                        >
+                          <font-awesome-icon icon="fa-solid fa-paperclip" class="mr-1" />
+                          {{ q.evidence_request ? 'Update Request' : 'Request Evidence' }}
+                        </v-btn>
+
+                        <div v-if="q.evidence_files?.length" class="q-evidence-files mt-2">
+                          <div v-for="f in q.evidence_files" :key="f.id" class="q-evidence-file">
+                            <font-awesome-icon
+                              icon="fa-solid fa-file"
+                              class="mr-2"
+                              style="color: #64748b"
+                            />
+                            <button
+                              class="q-evidence-filename"
+                              @click="downloadEvidence(f.file_path)"
+                            >
+                              {{ f.file_name }}
+                            </button>
+                            <span class="text-xs text-slate-400 ml-2">{{
+                              fmtDate(f.created_at)
+                            }}</span>
+                          </div>
+
+                          <div
+                            v-if="q.evidence_request?.status === 'submitted'"
+                            class="d-flex gap-2 mt-2"
+                          >
+                            <v-btn
+                              size="x-small"
+                              color="success"
+                              variant="tonal"
+                              :loading="reviewingEvidence.has(q.evidence_request.id)"
+                              @click="reviewEvidence(q.evidence_request.id, 'approved')"
+                            >
+                              Approve
+                            </v-btn>
+                            <v-btn
+                              size="x-small"
+                              color="error"
+                              variant="tonal"
+                              :loading="reviewingEvidence.has(q.evidence_request.id)"
+                              @click="reviewEvidence(q.evidence_request.id, 'rejected')"
+                            >
+                              Reject
+                            </v-btn>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button class="q-review-toggle" @click="toggleQuestionReview(q.question_id)">
+                        <font-awesome-icon icon="fa-solid fa-clipboard-check" class="mr-1" />
+                        {{
+                          questionReviewDrafts[q.question_id]?.is_published ? 'Published' : 'Review'
+                        }}
+                      </button>
+
+                      <div v-if="expandedReviewQuestion === q.question_id" class="q-review-panel">
+                        <v-textarea
+                          v-model="questionReviewDrafts[q.question_id].notes"
+                          label="Admin review note"
+                          variant="outlined"
+                          density="compact"
+                          rows="2"
+                          auto-grow
+                          hide-details
+                        />
+                        <div class="d-flex gap-2 mt-2">
+                          <v-btn
+                            size="x-small"
+                            variant="outlined"
+                            color="primary"
+                            :loading="savingQuestionIds.has(q.question_id)"
+                            @click="
+                              saveQuestionReview(
+                                q.question_id,
+                                questionReviewDrafts[q.question_id].is_published
+                              )
+                            "
+                          >
+                            Save Note
+                          </v-btn>
+                          <v-btn
+                            size="x-small"
+                            variant="flat"
+                            :color="
+                              questionReviewDrafts[q.question_id].is_published ? 'grey' : 'success'
+                            "
+                            :loading="savingQuestionIds.has(q.question_id)"
+                            @click="
+                              saveQuestionReview(
+                                q.question_id,
+                                !questionReviewDrafts[q.question_id].is_published
+                              )
+                            "
+                          >
+                            {{
+                              questionReviewDrafts[q.question_id].is_published
+                                ? 'Unpublish'
+                                : 'Publish'
+                            }}
+                          </v-btn>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -862,6 +1038,43 @@
     </Transition>
   </Teleport>
 
+  <v-dialog v-model="showEvidenceDialog" max-width="480" persistent>
+    <v-card rounded="xl">
+      <v-card-title class="pa-5 pb-3">
+        Request Evidence — {{ evidenceDialogQuestion?.question_ref }}
+      </v-card-title>
+      <v-card-text class="pa-5 pt-0">
+        <v-textarea
+          v-model="evidenceRequestDrafts[evidenceDialogQuestion?.question_id].instructions"
+          label="What evidence should the client upload?"
+          variant="outlined"
+          density="comfortable"
+          rows="3"
+          class="mb-3"
+        />
+        <v-text-field
+          v-model="evidenceRequestDrafts[evidenceDialogQuestion?.question_id].due_date"
+          type="date"
+          label="Due date (optional)"
+          variant="outlined"
+          density="comfortable"
+        />
+      </v-card-text>
+      <v-card-actions class="pa-4 pt-0">
+        <v-btn variant="text" @click="showEvidenceDialog = false">Cancel</v-btn>
+        <v-spacer />
+        <v-btn
+          color="primary"
+          variant="flat"
+          :loading="savingEvidenceRequest.has(evidenceDialogQuestion?.question_id)"
+          @click="submitEvidenceRequest"
+        >
+          Send Request
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
   <!-- ── Add Finding Dialog ───────────────────────── -->
   <v-dialog v-model="showAddFinding" max-width="480" persistent>
     <v-card rounded="xl">
@@ -999,6 +1212,17 @@ const showAddFinding = ref(false)
 const showAddAction = ref(false)
 const selectedFinding = ref<any>(null)
 const newFinding = ref({ title: '', description: '', severity: 'medium', recommendation: '' })
+const questionReviewDrafts = ref<Record<string, { notes: string; is_published: boolean }>>({})
+const moduleReviewDrafts = ref<Record<string, { notes: string; is_published: boolean }>>({})
+const expandedReviewQuestion = ref<string | null>(null)
+const savingQuestionIds = ref<Set<string>>(new Set())
+const savingModuleIds = ref<Set<string>>(new Set())
+const evidenceRequestDrafts = ref<Record<string, { instructions: string; due_date: string }>>({})
+const showEvidenceDialog = ref(false)
+const evidenceDialogQuestion = ref<any>(null)
+const savingEvidenceRequest = ref<Set<string>>(new Set())
+const reviewingEvidence = ref<Set<string>>(new Set())
+
 const newAction = ref({
   description: '',
   assigned_to: null as string | null,
@@ -1063,6 +1287,7 @@ async function loadAssessment(id: string) {
     if (error) throw error
     d.value = data
     reviewNotes.value = data.review_notes ?? ''
+    buildReviewDrafts(data)
   } catch (e: any) {
     showSnack(e.message, 'error')
   } finally {
@@ -1070,6 +1295,136 @@ async function loadAssessment(id: string) {
   }
 }
 
+function buildReviewDrafts(data: any) {
+  const qDrafts: Record<string, { notes: string; is_published: boolean }> = {}
+  for (const q of data.responses ?? []) {
+    qDrafts[q.question_id] = {
+      notes: q.review_notes ?? '',
+      is_published: q.review_is_published ?? false
+    }
+  }
+  questionReviewDrafts.value = qDrafts
+
+  const mDrafts: Record<string, { notes: string; is_published: boolean }> = {}
+  for (const m of data.module_scores ?? []) {
+    mDrafts[m.module_id] = {
+      notes: m.review_notes ?? '',
+      is_published: m.review_is_published ?? false
+    }
+  }
+  moduleReviewDrafts.value = mDrafts
+}
+
+function toggleQuestionReview(questionId: string) {
+  expandedReviewQuestion.value = expandedReviewQuestion.value === questionId ? null : questionId
+}
+
+async function saveQuestionReview(questionId: string, publish: boolean) {
+  const draft = questionReviewDrafts.value[questionId]
+  if (!draft) return
+  savingQuestionIds.value.add(questionId)
+  try {
+    const { error } = await supabase.rpc('admin_save_question_review', {
+      p_assessment_id: props.assessmentId,
+      p_question_id: questionId,
+      p_notes: draft.notes || null,
+      p_is_published: publish
+    })
+    if (error) throw error
+    draft.is_published = publish
+    showSnack(publish ? 'Question published' : 'Review note saved', 'success')
+  } catch (e: any) {
+    showSnack(e.message, 'error')
+  } finally {
+    savingQuestionIds.value.delete(questionId)
+  }
+}
+
+async function saveModuleReview(moduleId: string, publish: boolean) {
+  const draft = moduleReviewDrafts.value[moduleId]
+  if (!draft) return
+  savingModuleIds.value.add(moduleId)
+  try {
+    const { error } = await supabase.rpc('admin_save_module_review', {
+      p_assessment_id: props.assessmentId,
+      p_module_id: moduleId,
+      p_notes: draft.notes || null,
+      p_is_published: publish
+    })
+    if (error) throw error
+    draft.is_published = publish
+    showSnack(publish ? 'Module published' : 'Review note saved', 'success')
+  } catch (e: any) {
+    showSnack(e.message, 'error')
+  } finally {
+    savingModuleIds.value.delete(moduleId)
+  }
+}
+
+function openRequestEvidence(q: any) {
+  evidenceDialogQuestion.value = q
+  evidenceRequestDrafts.value[q.question_id] = {
+    instructions: q.evidence_request?.instructions ?? '',
+    due_date: q.evidence_request?.due_date ?? ''
+  }
+  showEvidenceDialog.value = true
+}
+
+async function submitEvidenceRequest() {
+  const q = evidenceDialogQuestion.value
+  const draft = evidenceRequestDrafts.value[q.question_id]
+  savingEvidenceRequest.value.add(q.question_id)
+  try {
+    const { error } = await supabase.rpc('admin_request_evidence', {
+      p_assessment_id: props.assessmentId,
+      p_question_id: q.question_id,
+      p_instructions: draft.instructions,
+      p_due_date: draft.due_date || null
+    })
+    if (error) throw error
+    showSnack('Evidence requested', 'success')
+    showEvidenceDialog.value = false
+    await loadAssessment(props.assessmentId!)
+  } catch (e: any) {
+    showSnack(e.message, 'error')
+  } finally {
+    savingEvidenceRequest.value.delete(q.question_id)
+  }
+}
+
+async function reviewEvidence(requestId: string, status: 'approved' | 'rejected', notes = '') {
+  reviewingEvidence.value.add(requestId)
+  try {
+    const { error } = await supabase.rpc('admin_review_evidence_request', {
+      p_request_id: requestId,
+      p_status: status,
+      p_review_notes: notes || null
+    })
+    if (error) throw error
+    showSnack(status === 'approved' ? 'Evidence approved' : 'Evidence rejected', 'success')
+    await loadAssessment(props.assessmentId!)
+  } catch (e: any) {
+    showSnack(e.message, 'error')
+  } finally {
+    reviewingEvidence.value.delete(requestId)
+  }
+}
+
+async function downloadEvidence(filePath: string) {
+  const { data, error } = await supabase.storage
+    .from('assessment-evidence')
+    .createSignedUrl(filePath, 60)
+  if (error) return showSnack(error.message, 'error')
+  window.open(data.signedUrl, '_blank')
+}
+
+function evidenceStatusColor(status?: string) {
+  return (
+    { requested: 'warning', submitted: 'info', approved: 'success', rejected: 'error' }[
+      status ?? ''
+    ] ?? 'grey'
+  )
+}
 async function loadStaff() {
   const { data } = await supabase.rpc('get_admin_staff')
   staff.value = data ?? []
@@ -1142,6 +1497,7 @@ const filteredModuleGroups = computed(() => {
     if (!grouped[q.module_code]) {
       const ms = moduleScores.value.find((m: any) => m.module_code === q.module_code)
       grouped[q.module_code] = {
+        module_id: ms?.module_id,
         module_code: q.module_code,
         module_name: q.module_name,
         module_score: ms?.module_score ?? 0,
