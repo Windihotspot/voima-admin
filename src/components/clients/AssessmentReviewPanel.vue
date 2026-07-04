@@ -169,6 +169,25 @@
                     </div>
                   </div>
                 </div>
+                <v-btn
+                  size="x-small"
+                  variant="text"
+                  color="purple"
+                  @click="
+                    openOverride(
+                      'health',
+                      '',
+                      'Overall Health Score',
+                      d.health_score_override ?? healthScore
+                    )
+                  "
+                >
+                  Override
+                </v-btn>
+                <div v-if="d.health_score_override !== null" class="text-xs text-purple-600">
+                  Overridden to {{ d.health_score_override }} — {{ d.health_score_override_reason }}
+                  <button @click="clearOverride('health')">Clear</button>
+                </div>
 
                 <!-- Row 1: Gauge + Radar -->
                 <div class="ch-grid-2 mt-5">
@@ -375,6 +394,28 @@
                               {{ moduleRatingLabel(mod.module_score).label }}
                             </span>
                           </td>
+                          <v-btn
+                            size="x-small"
+                            variant="text"
+                            color="purple"
+                            @click="
+                              openOverride(
+                                'module',
+                                mod.module_id,
+                                mod.module_name,
+                                mod.admin_override_score ?? mod.module_score
+                              )
+                            "
+                          >
+                            <font-awesome-icon icon="fa-solid fa-pen" class="mr-1" />Override
+                          </v-btn>
+                          <span
+                            v-if="mod.admin_override_score !== null"
+                            class="text-xs text-purple-600 ml-2"
+                          >
+                            Overridden ({{ mod.admin_override_reason }})
+                            <button @click="clearOverride('module', mod.module_id)">Clear</button>
+                          </span>
                         </tr>
                       </tbody>
                     </table>
@@ -763,7 +804,36 @@
                           </div>
                         </div>
                       </div>
-
+                      <div v-if="q.admin_override_points !== null" class="q-override-tag">
+                        <font-awesome-icon
+                          icon="fa-solid fa-pen"
+                          class="mr-1"
+                          style="color: #7c3aed"
+                        />
+                        Overridden: {{ q.admin_override_points }} pts —
+                        {{ q.admin_override_reason }}
+                        <button
+                          class="q-override-clear"
+                          @click="clearOverride('question', q.question_id)"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <v-btn
+                        size="x-small"
+                        variant="text"
+                        color="purple"
+                        @click="
+                          openOverride(
+                            'question',
+                            q.question_id,
+                            q.question_ref,
+                            q.admin_override_points ?? q.points
+                          )
+                        "
+                      >
+                        Override Score
+                      </v-btn>
                       <button class="q-review-toggle" @click="toggleQuestionReview(q.question_id)">
                         <font-awesome-icon icon="fa-solid fa-clipboard-check" class="mr-1" />
                         {{
@@ -1175,6 +1245,42 @@
     </v-card>
   </v-dialog>
 
+  <v-dialog v-model="showScoreOverrideDialog" max-width="420" persistent>
+    <v-card rounded="xl">
+      <v-card-title class="pa-5 pb-3">Override Score — {{ overrideTarget?.label }}</v-card-title>
+      <v-card-text class="pa-5 pt-0">
+        <v-text-field
+          v-model.number="overrideDraft.value"
+          :label="overrideTarget?.type === 'question' ? 'Points' : 'Score (0–100)'"
+          type="number"
+          variant="outlined"
+          density="comfortable"
+          class="mb-3"
+        />
+        <v-textarea
+          v-model="overrideDraft.reason"
+          label="Reason (required)"
+          variant="outlined"
+          density="comfortable"
+          rows="2"
+        />
+      </v-card-text>
+      <v-card-actions class="pa-4 pt-0">
+        <v-btn variant="text" @click="showScoreOverrideDialog = false">Cancel</v-btn>
+        <v-spacer />
+        <v-btn
+          color="primary"
+          variant="flat"
+          :loading="savingOverride"
+          :disabled="!overrideDraft.reason"
+          @click="submitOverride"
+        >
+          Apply Override
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
   <!-- Snackbar -->
   <v-snackbar v-model="snack.show" :color="snack.color" timeout="3000" location="bottom right">
     {{ snack.message }}
@@ -1281,7 +1387,7 @@ watch(
 async function loadAssessment(id: string) {
   loading.value = true
   try {
-    const { data, error } = await supabase.rpc('get_assessment_review_admin', {
+    const { data, error } = await supabase.rpc('get_assessment_review_admin_v1', {
       p_assessment_id: id
     })
     if (error) throw error
@@ -1425,6 +1531,91 @@ function evidenceStatusColor(status?: string) {
     ] ?? 'grey'
   )
 }
+
+const showScoreOverrideDialog = ref(false)
+const overrideTarget = ref<{
+  type: 'question' | 'module' | 'health'
+  id: string
+  label: string
+} | null>(null)
+const overrideDraft = ref({ value: 0, reason: '' })
+const savingOverride = ref(false)
+
+function openOverride(
+  type: 'question' | 'module' | 'health',
+  id: string,
+  label: string,
+  currentValue: number
+) {
+  overrideTarget.value = { type, id, label }
+  overrideDraft.value = { value: currentValue, reason: '' }
+  showScoreOverrideDialog.value = true
+}
+
+async function submitOverride() {
+  const t = overrideTarget.value
+  if (!t) return
+  savingOverride.value = true
+  try {
+    let error
+    if (t.type === 'question') {
+      ;({ error } = await supabase.rpc('admin_override_question_score', {
+        p_assessment_id: props.assessmentId,
+        p_question_id: t.id,
+        p_points: overrideDraft.value.value,
+        p_reason: overrideDraft.value.reason
+      }))
+    } else if (t.type === 'module') {
+      ;({ error } = await supabase.rpc('admin_override_module_score', {
+        p_assessment_id: props.assessmentId,
+        p_module_id: t.id,
+        p_score: overrideDraft.value.value,
+        p_reason: overrideDraft.value.reason
+      }))
+    } else {
+      ;({ error } = await supabase.rpc('admin_override_health_score', {
+        p_assessment_id: props.assessmentId,
+        p_score: overrideDraft.value.value,
+        p_reason: overrideDraft.value.reason
+      }))
+    }
+    if (error) throw error
+    showSnack('Score overridden', 'success')
+    showScoreOverrideDialog.value = false
+    await loadAssessment(props.assessmentId!)
+  } catch (e: any) {
+    showSnack(e.message, 'error')
+  } finally {
+    savingOverride.value = false
+  }
+}
+
+async function clearOverride(type: 'question' | 'module' | 'health', id?: string) {
+  try {
+    let error
+    if (type === 'question') {
+      ;({ error } = await supabase.rpc('admin_clear_question_score_override', {
+        p_assessment_id: props.assessmentId,
+        p_question_id: id
+      }))
+    } else if (type === 'module') {
+      ;({ error } = await supabase.rpc('admin_clear_module_score_override', {
+        p_assessment_id: props.assessmentId,
+        p_module_id: id
+      }))
+    } else {
+      ;({ error } = await supabase.rpc('admin_clear_health_score_override', {
+        p_assessment_id: props.assessmentId
+      }))
+    }
+    if (error) throw error
+    showSnack('Override cleared', 'success')
+    await loadAssessment(props.assessmentId!)
+  } catch (e: any) {
+    showSnack(e.message, 'error')
+  }
+}
+
 async function loadStaff() {
   const { data } = await supabase.rpc('get_admin_staff')
   staff.value = data ?? []
