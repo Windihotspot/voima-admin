@@ -18,7 +18,6 @@
                   <span class="arp-dot">·</span>
                   <span class="capitalize">{{ d?.entity_category?.replace(/_/g, ' ') }}</span>
                   <span class="arp-dot">·</span>
-                  <span>{{ d?.engagement?.service_package?.replace(/_/g, ' ') ?? '—' }}</span>
                 </div>
               </div>
             </div>
@@ -48,7 +47,7 @@
               >
                 <font-awesome-icon icon="fa-solid fa-flag" class="mr-2" />Flag for Review
               </v-btn>
-              <v-btn icon size="small" variant="text" @click="close">
+              <v-btn class="text-white" icon size="small" variant="text" @click="close">
                 <font-awesome-icon icon="fa-solid fa-xmark" />
               </v-btn>
             </div>
@@ -95,7 +94,7 @@
                       <div class="ch-kpi-value" :style="{ color: gaugeColor }">
                         {{ healthScore }}%
                       </div>
-                      <div class="ch-kpi-label">Health Score</div>
+                      <div class="ch-kpi-label">Score</div>
                     </div>
                   </div>
                   <div class="ch-kpi-card">
@@ -169,7 +168,49 @@
                     </div>
                   </div>
                 </div>
-                <v-btn
+                <!-- Score adjustment (admin only) -->
+                <div class="ch-card mt-5 admin-only-card">
+                  <div class="ch-card-head">
+                    <font-awesome-icon icon="fa-solid fa-sliders" style="color: #7c3aed" />
+                    <span class="ch-card-title">Overall Score Adjustment</span>
+                    <!-- <span class="ch-card-sub admin-badge">Admin Only</span> -->
+                  </div>
+                  <div class="ch-card-body">
+                    <p class="text-sm text-slate-500 mb-4">
+                      Apply a manual positive or negative adjustment to the health score.
+                    </p>
+                    <div class="d-flex gap-3 align-end flex-wrap">
+                      <v-text-field
+                        v-model.number="scoreAdj.points"
+                        label="Points (e.g. -5 or +3)"
+                        type="number"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        style="max-width: 200px"
+                      />
+                      <v-text-field
+                        v-model="scoreAdj.reason"
+                        label="Reason"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        style="max-width: 340px"
+                      />
+                      <v-btn
+                        color="purple"
+                        variant="tonal"
+                        size="small"
+                        :loading="actionLoading.scoreAdj"
+                        :disabled="!scoreAdj.reason || scoreAdj.points === 0"
+                        @click="applyScoreAdjustment"
+                      >
+                        Apply
+                      </v-btn>
+                    </div>
+                  </div>
+                </div>
+                <!-- <v-btn
                   size="x-small"
                   variant="text"
                   color="purple"
@@ -187,10 +228,10 @@
                 <div v-if="d.health_score_override !== null" class="text-xs text-purple-600">
                   Overridden to {{ d.health_score_override }} — {{ d.health_score_override_reason }}
                   <button @click="clearOverride('health')">Clear</button>
-                </div>
+                </div> -->
 
                 <!-- Row 1: Gauge + Radar -->
-                <div class="ch-grid-2 mt-5">
+                <div class="mt-5">
                   <div class="ch-card">
                     <div class="ch-card-head">
                       <font-awesome-icon icon="fa-solid fa-gauge-high" style="color: #2563eb" />
@@ -227,7 +268,7 @@
                       </div>
                     </div>
                   </div>
-                  <div class="ch-card">
+                  <!-- <div class="ch-card">
                     <div class="ch-card-head">
                       <font-awesome-icon icon="fa-solid fa-circle-nodes" style="color: #2563eb" />
                       <span class="ch-card-title">Module Coverage Radar</span>
@@ -242,10 +283,96 @@
                       />
                       <div v-else class="ch-chart-empty">No module data yet</div>
                     </div>
+                  </div> -->
+                </div>
+                <!-- Row 2: Module table -->
+                <div class="ch-card mt-5">
+                  <div class="ch-card-head">
+                    <font-awesome-icon icon="fa-solid fa-table-list" style="color: #2563eb" />
+                    <span class="ch-card-title">Module Detail</span>
+                  </div>
+                  <div class="ch-table-wrap">
+                    <table class="ch-table">
+                      <thead>
+                        <tr>
+                          <th>Module</th>
+                          <th>Score</th>
+                          <th class="ch-th-bar">Progress</th>
+                          <th>Weight</th>
+                          <th>Points</th>
+                          <th>Rating</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="mod in moduleScores" :key="mod.module_id">
+                          <td>
+                            <div class="ch-mod-name">{{ mod.module_name }}</div>
+                            <div class="ch-mod-desc">{{ mod.module_description }}</div>
+                          </td>
+                          <td>
+                            <span
+                              class="ch-score-num"
+                              :style="{ color: scoreBarColor(mod.module_score) }"
+                              >{{ Math.round(mod.module_score ?? 0) }}%</span
+                            >
+                          </td>
+                          <td class="ch-td-bar">
+                            <div class="ch-bar-track">
+                              <div
+                                class="ch-bar-fill"
+                                :style="{
+                                  width: Math.round(mod.module_score ?? 0) + '%',
+                                  background: scoreBarColor(mod.module_score)
+                                }"
+                              />
+                            </div>
+                          </td>
+                          <td>
+                            <span class="ch-weight-pill">{{ mod.weight ?? 0 }}%</span>
+                          </td>
+                          <td class="text-sm text-slate-500">
+                            {{ mod.earned_points }}/{{ mod.total_points }}
+                          </td>
+                          <td>
+                            <span
+                              class="ch-mod-rating"
+                              :style="{
+                                background: moduleRatingLabel(mod.module_score).bg,
+                                color: moduleRatingLabel(mod.module_score).color
+                              }"
+                            >
+                              {{ moduleRatingLabel(mod.module_score).label }}
+                            </span>
+                          </td>
+                          <!-- <v-btn
+                            size="x-small"
+                            variant="text"
+                            color="purple"
+                            @click="
+                              openOverride(
+                                'module',
+                                mod.module_id,
+                                mod.module_name,
+                                mod.admin_override_score ?? mod.module_score
+                              )
+                            "
+                          >
+                            <font-awesome-icon icon="fa-solid fa-pen" class="mr-1" />Adjust
+                          </v-btn> -->
+                          <!-- <span
+                            v-if="mod.admin_override_score !== null"
+                            class="text-xs text-purple-600 ml-2"
+                          >
+                            Overridden ({{ mod.admin_override_reason }})
+                            <button @click="clearOverride('module', mod.module_id)">Clear</button>
+                          </span> -->
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
-                <!-- Row 2: Module bar (full width) -->
+                <!-- Row 3: Module bar (full width) -->
                 <div class="ch-card mt-5">
                   <div class="ch-card-head">
                     <font-awesome-icon icon="fa-solid fa-bars-progress" style="color: #2563eb" />
@@ -262,7 +389,7 @@
                   </div>
                 </div>
 
-                <!-- Row 3: Gap donut + Response donut -->
+                <!-- Row 4: Gap donut + Response donut -->
                 <div class="ch-grid-2 mt-5">
                   <div class="ch-card">
                     <div class="ch-card-head">
@@ -334,137 +461,6 @@
                     </div>
                   </div>
                 </div>
-
-                <!-- Row 4: Module table -->
-                <div class="ch-card mt-5">
-                  <div class="ch-card-head">
-                    <font-awesome-icon icon="fa-solid fa-table-list" style="color: #2563eb" />
-                    <span class="ch-card-title">Module Detail</span>
-                  </div>
-                  <div class="ch-table-wrap">
-                    <table class="ch-table">
-                      <thead>
-                        <tr>
-                          <th>Module</th>
-                          <th>Score</th>
-                          <th class="ch-th-bar">Progress</th>
-                          <th>Weight</th>
-                          <th>Points</th>
-                          <th>Rating</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="mod in moduleScores" :key="mod.module_id">
-                          <td>
-                            <div class="ch-mod-name">{{ mod.module_name }}</div>
-                            <div class="ch-mod-desc">{{ mod.module_description }}</div>
-                          </td>
-                          <td>
-                            <span
-                              class="ch-score-num"
-                              :style="{ color: scoreBarColor(mod.module_score) }"
-                              >{{ Math.round(mod.module_score ?? 0) }}%</span
-                            >
-                          </td>
-                          <td class="ch-td-bar">
-                            <div class="ch-bar-track">
-                              <div
-                                class="ch-bar-fill"
-                                :style="{
-                                  width: Math.round(mod.module_score ?? 0) + '%',
-                                  background: scoreBarColor(mod.module_score)
-                                }"
-                              />
-                            </div>
-                          </td>
-                          <td>
-                            <span class="ch-weight-pill">{{ mod.weight ?? 0 }}%</span>
-                          </td>
-                          <td class="text-sm text-slate-500">
-                            {{ mod.earned_points }}/{{ mod.total_points }}
-                          </td>
-                          <td>
-                            <span
-                              class="ch-mod-rating"
-                              :style="{
-                                background: moduleRatingLabel(mod.module_score).bg,
-                                color: moduleRatingLabel(mod.module_score).color
-                              }"
-                            >
-                              {{ moduleRatingLabel(mod.module_score).label }}
-                            </span>
-                          </td>
-                          <v-btn
-                            size="x-small"
-                            variant="text"
-                            color="purple"
-                            @click="
-                              openOverride(
-                                'module',
-                                mod.module_id,
-                                mod.module_name,
-                                mod.admin_override_score ?? mod.module_score
-                              )
-                            "
-                          >
-                            <font-awesome-icon icon="fa-solid fa-pen" class="mr-1" />Override
-                          </v-btn>
-                          <span
-                            v-if="mod.admin_override_score !== null"
-                            class="text-xs text-purple-600 ml-2"
-                          >
-                            Overridden ({{ mod.admin_override_reason }})
-                            <button @click="clearOverride('module', mod.module_id)">Clear</button>
-                          </span>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <!-- Score adjustment (admin only) -->
-                <div class="ch-card mt-5 admin-only-card">
-                  <div class="ch-card-head">
-                    <font-awesome-icon icon="fa-solid fa-sliders" style="color: #7c3aed" />
-                    <span class="ch-card-title">Score Adjustment</span>
-                    <span class="ch-card-sub admin-badge">Admin Only</span>
-                  </div>
-                  <div class="ch-card-body">
-                    <p class="text-sm text-slate-500 mb-4">
-                      Apply a manual positive or negative adjustment to the health score. Current
-                      adjustments: <strong>{{ d.score_adjustments ?? 0 }}</strong> pts
-                    </p>
-                    <div class="d-flex gap-3 align-end flex-wrap">
-                      <v-text-field
-                        v-model.number="scoreAdj.points"
-                        label="Points (e.g. -5 or +3)"
-                        type="number"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        style="max-width: 140px"
-                      />
-                      <v-text-field
-                        v-model="scoreAdj.reason"
-                        label="Reason"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        style="max-width: 340px"
-                      />
-                      <v-btn
-                        color="purple"
-                        variant="tonal"
-                        size="small"
-                        :loading="actionLoading.scoreAdj"
-                        :disabled="!scoreAdj.reason || scoreAdj.points === 0"
-                        @click="applyScoreAdjustment"
-                      >
-                        Apply
-                      </v-btn>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <!-- ════════════════════════════════════════════
@@ -524,7 +520,7 @@
                         density="compact"
                         variant="outlined"
                         hide-details
-                        style="max-width: 140px; font-size: 12px"
+                        style="width: 200px; font-size: 12px"
                         @update:model-value="(v) => updateGap(gap.id, { status: v })"
                       />
                     </div>
@@ -554,7 +550,7 @@
 
                   <div class="gap-footer">
                     <div class="d-flex align-center gap-3 flex-wrap">
-                      <div class="d-flex align-center gap-2">
+                      <!-- <div class="d-flex align-center gap-2">
                         <font-awesome-icon
                           icon="fa-solid fa-user"
                           class="text-slate-400"
@@ -572,13 +568,14 @@
                           style="max-width: 180px; font-size: 12px"
                           @update:model-value="(v) => updateGap(gap.id, { assigned_to: v })"
                         />
-                      </div>
+                      </div> -->
                       <div class="d-flex align-center gap-2">
-                        <font-awesome-icon
+                        <!-- <font-awesome-icon
                           icon="fa-regular fa-calendar"
                           class="text-slate-400"
                           style="font-size: 11px"
-                        />
+                        /> -->
+                        <p class="font-semibold text-xs">Due date</p>
                         <input
                           type="date"
                           class="date-input"
@@ -590,10 +587,10 @@
                         />
                       </div>
                     </div>
-                    <div v-if="gap.evidence_required" class="gap-evidence-tag">
+                    <!-- <div v-if="gap.evidence_required" class="gap-evidence-tag">
                       <font-awesome-icon icon="fa-solid fa-paperclip" class="mr-1" />Evidence
                       required
-                    </div>
+                    </div> -->
                   </div>
                 </div>
               </div>
@@ -630,7 +627,6 @@
                   class="q-module-group"
                 >
                   <div class="q-module-header">
-                    <div class="q-module-badge">{{ mod.module_code }}</div>
                     <span class="q-module-name">{{ mod.module_name }}</span>
                     <div
                       class="q-module-score-pill"
@@ -641,6 +637,21 @@
                     >
                       {{ Math.round(mod.module_score ?? 0) }}%
                     </div>
+                    <v-btn
+                      size="x-small"
+                      variant="text"
+                      color="purple"
+                      @click="
+                        openOverride(
+                          'module',
+                          mod.module_id,
+                          mod.module_name,
+                          mod.admin_override_score ?? mod.module_score
+                        )
+                      "
+                    >
+                      <font-awesome-icon icon="fa-solid fa-pen" class="mr-1" />Adjust Score
+                    </v-btn>
                     <v-chip
                       size="x-small"
                       :color="moduleReviewDrafts[mod.module_id]?.is_published ? 'success' : 'grey'"
@@ -665,7 +676,7 @@
                       auto-grow
                       hide-details
                     />
-                    <div class="d-flex gap-2 mt-2">
+                    <div class="d-flex gap-2 mt-4 mb-6">
                       <v-btn
                         size="x-small"
                         variant="outlined"
@@ -723,19 +734,19 @@
                           {{ q.response?.toUpperCase() ?? 'UNANSWERED' }}
                         </v-chip>
                         <span class="q-points">{{ q.points }} pts</span>
-                        <v-chip v-if="q.has_gap" size="x-small" color="error" variant="tonal"
+                        <!-- <v-chip v-if="q.has_gap" size="x-small" color="error" variant="tonal"
                           >Gap</v-chip
-                        >
+                        > -->
                       </div>
                       <p class="q-text">{{ q.question_text }}</p>
-                      <div v-if="q.response === 'no' && q.remediation_action" class="q-remediation">
+                      <!-- <div v-if="q.response === 'no' && q.remediation_action" class="q-remediation">
                         <font-awesome-icon
                           icon="fa-solid fa-arrow-right"
                           class="mr-1"
                           style="color: #7c3aed; font-size: 10px"
                         />
                         {{ q.remediation_action }}
-                      </div>
+                      </div> -->
                       <p v-if="q.response_notes" class="q-notes">
                         <font-awesome-icon icon="fa-regular fa-comment-dots" class="mr-1" />{{
                           q.response_notes
@@ -752,6 +763,7 @@
                           Evidence: {{ q.evidence_request.status }}
                         </v-chip>
                         <v-btn
+                          v-if="q.response === 'yes'"
                           size="x-small"
                           variant="text"
                           color="primary"
@@ -804,7 +816,7 @@
                           </div>
                         </div>
                       </div>
-                      <div v-if="q.admin_override_points !== null" class="q-override-tag">
+                      <!-- <div v-if="q.admin_override_points !== null" class="q-override-tag">
                         <font-awesome-icon
                           icon="fa-solid fa-pen"
                           class="mr-1"
@@ -818,8 +830,8 @@
                         >
                           Clear
                         </button>
-                      </div>
-                      <v-btn
+                      </div> -->
+                      <!-- <v-btn
                         size="x-small"
                         variant="text"
                         color="purple"
@@ -832,8 +844,8 @@
                           )
                         "
                       >
-                        Override Score
-                      </v-btn>
+                        Adjust Score
+                      </v-btn> -->
                       <button class="q-review-toggle" @click="toggleQuestionReview(q.question_id)">
                         <font-awesome-icon icon="fa-solid fa-clipboard-check" class="mr-1" />
                         {{
@@ -841,7 +853,10 @@
                         }}
                       </button>
 
-                      <div v-if="expandedReviewQuestion === q.question_id" class="q-review-panel">
+                      <div
+                        v-if="expandedReviewQuestion === q.question_id"
+                        class="q-review-panel mt-4"
+                      >
                         <v-textarea
                           v-model="questionReviewDrafts[q.question_id].notes"
                           label="Admin review note"
@@ -1057,7 +1072,7 @@
                 </div>
 
                 <!-- Score adjustment here too -->
-                <div class="ch-card mt-4 admin-only-card">
+                <!-- <div class="ch-card mt-4 admin-only-card">
                   <div class="ch-card-head">
                     <font-awesome-icon icon="fa-solid fa-sliders" style="color: #7c3aed" />
                     <span class="ch-card-title">Score Adjustment Log</span>
@@ -1096,7 +1111,7 @@
                       Total adjustments applied: <strong>{{ d.score_adjustments ?? 0 }} pts</strong>
                     </p>
                   </div>
-                </div>
+                </div> -->
               </div>
             </div>
             <!-- /arp-tab-body -->
@@ -1247,7 +1262,7 @@
 
   <v-dialog v-model="showScoreOverrideDialog" max-width="420" persistent>
     <v-card rounded="xl">
-      <v-card-title class="pa-5 pb-3">Override Score — {{ overrideTarget?.label }}</v-card-title>
+      <v-card-title class="pa-5 pb-3">Adjust Score — {{ overrideTarget?.label }}</v-card-title>
       <v-card-text class="pa-5 pt-0">
         <v-text-field
           v-model.number="overrideDraft.value"
@@ -1275,7 +1290,7 @@
           :disabled="!overrideDraft.reason"
           @click="submitOverride"
         >
-          Apply Override
+          Apply
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -2070,7 +2085,7 @@ function riskChipColor(r: string) {
 }
 function gapStatusColor(s: string) {
   return (
-    { open: 'error', in_progress: 'warning', completed: 'success', overdue: 'deep-orange' }[s] ??
+    { open: 'primary', in_progress: 'warning', completed: 'success', overdue: 'deep-orange' }[s] ??
     'grey'
   )
 }
