@@ -88,6 +88,18 @@ export interface PageCounts {
   total_active_clients: number
 }
 
+export interface PageCounts {
+  waitlist_pending: number
+  waitlist_approved: number
+  onboarding_draft: number
+  onboarding_submitted: number
+  onboarding_approved: number
+  assessment_completed: number // NEW
+  assessment_under_review: number
+  assessment_published: number
+  total_active_clients: number
+}
+
 // ─────────────────────────────────────────────
 // Composable
 // ─────────────────────────────────────────────

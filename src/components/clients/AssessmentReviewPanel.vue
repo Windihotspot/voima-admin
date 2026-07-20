@@ -169,13 +169,12 @@
                   </div>
                 </div>
                 <!-- Score adjustment (admin only) -->
-                <div class="ch-card mt-5 admin-only-card">
-                  <div class="ch-card-head">
+
+                <!-- <div class="ch-card-head">
                     <font-awesome-icon icon="fa-solid fa-sliders" style="color: #7c3aed" />
                     <span class="ch-card-title">Overall Score Adjustment</span>
-                    <!-- <span class="ch-card-sub admin-badge">Admin Only</span> -->
-                  </div>
-                  <div class="ch-card-body">
+                  </div> -->
+                <!-- <div class="ch-card-body">
                     <p class="text-sm text-slate-500 mb-4">
                       Apply a manual positive or negative adjustment to the health score.
                     </p>
@@ -208,8 +207,8 @@
                         Apply
                       </v-btn>
                     </div>
-                  </div>
-                </div>
+                  </div> -->
+
                 <!-- <v-btn
                   size="x-small"
                   variant="text"
@@ -459,138 +458,6 @@
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- ════════════════════════════════════════════
-                   TAB: GAPS
-                   ════════════════════════════════════════════ -->
-              <div v-show="innerTab === 'gaps'">
-                <div class="arp-section-toolbar">
-                  <v-select
-                    v-model="gapFilter"
-                    :items="['all', 'critical', 'high', 'medium', 'low']"
-                    density="compact"
-                    variant="outlined"
-                    hide-details
-                    style="max-width: 160px"
-                    label="Risk Rating"
-                  />
-                  <v-select
-                    v-model="gapStatusFilter"
-                    :items="['all', 'open', 'in_progress', 'completed', 'overdue']"
-                    density="compact"
-                    variant="outlined"
-                    hide-details
-                    style="max-width: 160px"
-                    label="Status"
-                  />
-                </div>
-
-                <div v-if="!filteredGaps.length" class="arp-empty">
-                  No gaps match the current filter.
-                </div>
-
-                <div
-                  v-for="gap in filteredGaps"
-                  :key="gap.id"
-                  class="gap-card"
-                  :style="`border-left-color: ${riskColor(gap.risk_rating)}`"
-                >
-                  <div class="gap-card-head">
-                    <div class="gap-card-left">
-                      <code class="ref-code">{{ gap.gap_ref }}</code>
-                      <v-chip
-                        :color="riskChipColor(gap.risk_rating)"
-                        size="x-small"
-                        variant="flat"
-                        class="font-weight-bold text-uppercase"
-                        >{{ gap.risk_rating }}</v-chip
-                      >
-                      <v-chip :color="gapStatusColor(gap.status)" size="x-small" variant="tonal">{{
-                        gap.status?.replace(/_/g, ' ')
-                      }}</v-chip>
-                      <span class="gap-module-tag">{{ gap.module_name }}</span>
-                    </div>
-                    <div class="gap-card-actions">
-                      <v-select
-                        :model-value="gap.status"
-                        :items="['open', 'in_progress', 'completed', 'overdue']"
-                        density="compact"
-                        variant="outlined"
-                        hide-details
-                        style="width: 200px; font-size: 12px"
-                        @update:model-value="(v) => updateGap(gap.id, { status: v })"
-                      />
-                    </div>
-                  </div>
-                  <p class="gap-title">{{ gap.title }}</p>
-                  <p class="gap-desc">{{ gap.description }}</p>
-
-                  <div class="gap-question-box" v-if="gap.question_text">
-                    <span class="gap-q-label">Question {{ gap.question_ref }}</span>
-                    <p class="gap-q-text">{{ gap.question_text }}</p>
-                    <div class="gap-response-row">
-                      <span class="gap-resp-label">Response:</span>
-                      <v-chip :color="responseColor(gap.response)" size="x-small" variant="flat">
-                        {{ gap.response?.toUpperCase() ?? 'NO RESPONSE' }}
-                      </v-chip>
-                    </div>
-                  </div>
-
-                  <div class="gap-remediation" v-if="gap.remediation_action">
-                    <font-awesome-icon
-                      icon="fa-solid fa-lightbulb"
-                      class="mr-2"
-                      style="color: #7c3aed"
-                    />
-                    <span>{{ gap.remediation_action }}</span>
-                  </div>
-
-                  <div class="gap-footer">
-                    <div class="d-flex align-center gap-3 flex-wrap">
-                      <!-- <div class="d-flex align-center gap-2">
-                        <font-awesome-icon
-                          icon="fa-solid fa-user"
-                          class="text-slate-400"
-                          style="font-size: 11px"
-                        />
-                        <v-select
-                          :model-value="gap.assigned_to"
-                          :items="staff"
-                          item-title="full_name"
-                          item-value="id"
-                          density="compact"
-                          variant="plain"
-                          hide-details
-                          placeholder="Assign to…"
-                          style="max-width: 180px; font-size: 12px"
-                          @update:model-value="(v) => updateGap(gap.id, { assigned_to: v })"
-                        />
-                      </div> -->
-                      <div class="d-flex align-center gap-2">
-                        <!-- <font-awesome-icon
-                          icon="fa-regular fa-calendar"
-                          class="text-slate-400"
-                          style="font-size: 11px"
-                        /> -->
-                        <p class="font-semibold text-xs">Due date</p>
-                        <input
-                          type="date"
-                          class="date-input"
-                          :value="gap.due_date"
-                          @change="
-                            (e) =>
-                              updateGap(gap.id, { due_date: (e.target as HTMLInputElement).value })
-                          "
-                        />
-                      </div>
-                    </div>
-                    <!-- <div v-if="gap.evidence_required" class="gap-evidence-tag">
-                      <font-awesome-icon icon="fa-solid fa-paperclip" class="mr-1" />Evidence
-                      required
-                    </div> -->
                   </div>
                 </div>
               </div>
@@ -904,6 +771,138 @@
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ════════════════════════════════════════════
+                   TAB: GAPS
+                   ════════════════════════════════════════════ -->
+              <div v-show="innerTab === 'gaps'">
+                <div class="arp-section-toolbar">
+                  <v-select
+                    v-model="gapFilter"
+                    :items="['all', 'critical', 'high', 'medium', 'low']"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                    style="max-width: 160px"
+                    label="Risk Rating"
+                  />
+                  <v-select
+                    v-model="gapStatusFilter"
+                    :items="['all', 'open', 'in_progress', 'completed', 'overdue']"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                    style="max-width: 160px"
+                    label="Status"
+                  />
+                </div>
+
+                <div v-if="!filteredGaps.length" class="arp-empty">
+                  No gaps match the current filter.
+                </div>
+
+                <div
+                  v-for="gap in filteredGaps"
+                  :key="gap.id"
+                  class="gap-card"
+                  :style="`border-left-color: ${riskColor(gap.risk_rating)}`"
+                >
+                  <div class="gap-card-head">
+                    <div class="gap-card-left">
+                      <code class="ref-code">{{ gap.gap_ref }}</code>
+                      <v-chip
+                        :color="riskChipColor(gap.risk_rating)"
+                        size="x-small"
+                        variant="flat"
+                        class="font-weight-bold text-uppercase"
+                        >{{ gap.risk_rating }}</v-chip
+                      >
+                      <v-chip :color="gapStatusColor(gap.status)" size="x-small" variant="tonal">{{
+                        gap.status?.replace(/_/g, ' ')
+                      }}</v-chip>
+                      <span class="gap-module-tag">{{ gap.module_name }}</span>
+                    </div>
+                    <div class="gap-card-actions">
+                      <v-select
+                        :model-value="gap.status"
+                        :items="['open', 'in_progress', 'completed', 'overdue']"
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        style="width: 200px; font-size: 12px"
+                        @update:model-value="(v) => updateGap(gap.id, { status: v })"
+                      />
+                    </div>
+                  </div>
+                  <!-- <p class="gap-title">{{ gap.title }}</p>
+                  <p class="gap-desc">{{ gap.description }}</p> -->
+
+                  <div class="gap-question-box" v-if="gap.question_text">
+                    <span class="gap-q-label">Question {{ gap.question_ref }}</span>
+                    <p class="gap-q-text">{{ gap.question_text }}</p>
+                    <div class="gap-response-row">
+                      <span class="gap-resp-label">Response:</span>
+                      <v-chip :color="responseColor(gap.response)" size="x-small" variant="flat">
+                        {{ gap.response?.toUpperCase() ?? 'NO RESPONSE' }}
+                      </v-chip>
+                    </div>
+                  </div>
+
+                  <div class="gap-remediation" v-if="gap.remediation_action">
+                    <font-awesome-icon
+                      icon="fa-solid fa-lightbulb"
+                      class="mr-2"
+                      style="color: #7c3aed"
+                    />
+                    <span>{{ gap.remediation_action }}</span>
+                  </div>
+
+                  <div class="gap-footer">
+                    <div class="d-flex align-center gap-3 flex-wrap">
+                      <!-- <div class="d-flex align-center gap-2">
+                        <font-awesome-icon
+                          icon="fa-solid fa-user"
+                          class="text-slate-400"
+                          style="font-size: 11px"
+                        />
+                        <v-select
+                          :model-value="gap.assigned_to"
+                          :items="staff"
+                          item-title="full_name"
+                          item-value="id"
+                          density="compact"
+                          variant="plain"
+                          hide-details
+                          placeholder="Assign to…"
+                          style="max-width: 180px; font-size: 12px"
+                          @update:model-value="(v) => updateGap(gap.id, { assigned_to: v })"
+                        />
+                      </div> -->
+                      <div class="d-flex align-center gap-2">
+                        <!-- <font-awesome-icon
+                          icon="fa-regular fa-calendar"
+                          class="text-slate-400"
+                          style="font-size: 11px"
+                        /> -->
+                        <p class="font-semibold text-xs">Due date</p>
+                        <input
+                          type="date"
+                          class="date-input"
+                          :value="gap.due_date"
+                          @change="
+                            (e) =>
+                              updateGap(gap.id, { due_date: (e.target as HTMLInputElement).value })
+                          "
+                        />
+                      </div>
+                    </div>
+                    <!-- <div v-if="gap.evidence_required" class="gap-evidence-tag">
+                      <font-awesome-icon icon="fa-solid fa-paperclip" class="mr-1" />Evidence
+                      required
+                    </div> -->
                   </div>
                 </div>
               </div>
@@ -1363,13 +1362,14 @@ const snack = ref({ show: false, message: '', color: 'success' })
 // ── Inner tabs ────────────────────────────────────────────
 const innerTabs = computed(() => [
   { key: 'dashboard', label: 'Dashboard', icon: 'fa-solid fa-gauge-high', count: 0 },
+  { key: 'questions', label: 'Questions', icon: 'fa-solid fa-circle-question', count: 0 },
   {
     key: 'gaps',
     label: 'Gaps',
     icon: 'fa-solid fa-triangle-exclamation',
     count: d.value?.gap_summary?.open ?? 0
   },
-  { key: 'questions', label: 'Questions', icon: 'fa-solid fa-circle-question', count: 0 },
+
   {
     key: 'findings',
     label: 'Findings',

@@ -238,7 +238,7 @@
             >
               <font-awesome-icon icon="fa-solid fa-eye" class="mr-1" />View
             </v-btn>
-            <!-- <v-menu>
+            <v-menu>
               <template #activator="{ props: mp }">
                 <v-btn size="x-small" variant="text" icon v-bind="mp">
                   <font-awesome-icon icon="fa-solid fa-ellipsis-vertical" />
@@ -281,11 +281,97 @@
                   /></template>
                 </v-list-item>
               </v-list>
-            </v-menu> -->
+            </v-menu>
           </div>
         </template>
         <template #no-data>
           <EmptyState icon="fa-solid fa-paper-plane" message="No submitted applications found" />
+        </template>
+      </v-data-table>
+    </template>
+
+    <!-- ═══ COMPLETED TAB ══════════════════════════ -->
+    <template v-if="activeTab === 'completed'">
+      <v-data-table
+        :headers="completedHeaders"
+        :items="assessmentItems"
+        :loading="loading"
+        hover
+        class="voima-table"
+        :items-per-page="perPage"
+        hide-default-footer
+      >
+        <template #item.company_name="{ item }">
+          <div
+            class="d-flex align-center gap-3 cursor-pointer"
+            @click="openDrawer('assessment', item.assessment_id)"
+          >
+            <div class="company-avatar">{{ item.company_name?.charAt(0) }}</div>
+            <div>
+              <p class="font-weight-semibold mb-0 text-primary">
+                {{ item.company_name }}
+              </p>
+              <p class="text-medium-emphasis mb-0">{{ item.assessment_ref }}</p>
+            </div>
+          </div>
+        </template>
+        <template #item.health_score="{ item }">
+          <div class="d-flex align-center gap-2">
+            <div class="score-ring" :style="`--score-color: ${scoreColor(item.health_score)}`">
+              <span class="score-val">{{ item.health_score?.toFixed(0) ?? '—' }}</span>
+            </div>
+            <v-chip :color="healthRatingColor(item.health_rating)" size="x-small" variant="tonal">
+              {{ item.health_rating || '—' }}
+            </v-chip>
+          </div>
+        </template>
+        <template #item.gaps="{ item }">
+          <div class="d-flex align-center gap-1">
+            <v-chip v-if="item.critical_gaps > 0" size="x-small" color="error" variant="flat">
+              <font-awesome-icon icon="fa-solid fa-triangle-exclamation" class="mr-1" />{{
+                item.critical_gaps
+              }}
+            </v-chip>
+            <span class="text-medium-emphasis">{{ item.total_gaps }} total</span>
+          </div>
+        </template>
+        <template #item.open_actions="{ item }">
+          <v-chip
+            :color="item.open_actions > 0 ? 'warning' : 'success'"
+            size="x-small"
+            variant="tonal"
+          >
+            {{ item.open_actions }} open
+          </v-chip>
+        </template>
+        <template #item.completed_at="{ item }">
+          <span class="">{{ item.completed_at ? fmtDate(item.completed_at) : '—' }}</span>
+        </template>
+        <template #item.actions="{ item }">
+          <div class="d-flex gap-1">
+            <v-btn
+              size="x-small"
+              variant="text"
+              color="primary"
+              @click="openDrawer('assessment', item.assessment_id)"
+            >
+              <font-awesome-icon icon="fa-solid fa-eye" class="mr-1" />View
+            </v-btn>
+            <v-btn
+              size="x-small"
+              color="warning"
+              variant="tonal"
+              @click="openReview('flag_review', item)"
+            >
+              <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="mr-1" />Start Review
+            </v-btn>
+          </div>
+        </template>
+        <template #no-data>
+          <EmptyState
+            icon="fa-solid fa-clipboard-check"
+            message="No completed assessments awaiting review"
+          />
         </template>
       </v-data-table>
     </template>
@@ -379,7 +465,7 @@
             >
               <font-awesome-icon icon="fa-solid fa-globe" class="mr-1" />Publish
             </v-btn>
-            <v-btn
+            <!-- <v-btn
               v-if="item.assessment_status === 'completed'"
               size="x-small"
               color="warning"
@@ -387,7 +473,7 @@
               @click="openReview('flag_review', item)"
             >
               <font-awesome-icon icon="fa-solid fa-flag" class="mr-1" />Flag
-            </v-btn>
+            </v-btn> -->
           </div>
         </template>
         <template #no-data>
@@ -589,7 +675,9 @@ const {
 } = useClients()
 
 // ── State ────────────────────────────────────────────────
-const activeTab = ref<'waitlist' | 'submitted' | 'under_review' | 'published'>('waitlist')
+const activeTab = ref<'waitlist' | 'submitted' | 'completed' | 'under_review' | 'published'>(
+  'waitlist'
+)
 const search = ref('')
 const statusFilter = ref<string | null>(null)
 const page = ref(1)
@@ -640,6 +728,13 @@ const tabs = computed(() => [
     badgeCount: (counts.value?.onboarding_submitted ?? 0) + (counts.value?.onboarding_draft ?? 0)
   },
   {
+    key: 'completed',
+    label: 'Completed',
+    desc: 'Awaiting review',
+    icon: 'fa-solid fa-clipboard-check',
+    badgeCount: counts.value?.assessment_completed ?? 0
+  },
+  {
     key: 'under_review',
     label: 'Under Review',
     desc: 'Assessment being reviewed',
@@ -676,11 +771,11 @@ const statusOptions = computed(() => {
       { label: 'Rejected', value: 'rejected' }
     ]
   }
+  if (activeTab.value === 'completed') {
+    return [{ label: 'Completed', value: 'completed' }]
+  }
   if (activeTab.value === 'under_review') {
-    return [
-      { label: 'Completed', value: 'completed' },
-      { label: 'Under Review', value: 'under_review' }
-    ]
+    return [{ label: 'Under Review', value: 'under_review' }]
   }
   // published tab
   return [{ label: 'Published', value: 'published' }]
@@ -711,6 +806,14 @@ const assessmentHeaders = [
   { title: 'Completed', key: 'completed_at', sortable: true, width: 120 },
   { title: '', key: 'actions', sortable: false, width: 180 }
 ]
+const completedHeaders = [
+  { title: 'Client', key: 'company_name', sortable: true, width: 220 },
+  { title: 'Health Score', key: 'health_score', sortable: true, width: 180 },
+  { title: 'Gaps', key: 'gaps', sortable: false, width: 150 },
+  { title: 'Open Actions', key: 'open_actions', sortable: false, width: 130 },
+  { title: 'Completed', key: 'completed_at', sortable: true, width: 120 },
+  { title: '', key: 'actions', sortable: false, width: 160 }
+]
 
 const publishedHeaders = [
   { title: 'Client', key: 'company_name', sortable: true, width: 220 },
@@ -739,6 +842,13 @@ async function loadData() {
   } else if (activeTab.value === 'submitted') {
     const data = await fetchApplications(params)
     applicationItems.value = data
+    totalCount.value = data[0]?.total_count ?? 0
+  } else if (activeTab.value === 'completed') {
+    const data = await fetchAssessments({
+      ...params,
+      status: statusFilter.value ?? 'completed' // always default to 'completed'
+    })
+    assessmentItems.value = data
     totalCount.value = data[0]?.total_count ?? 0
   } else if (activeTab.value === 'under_review') {
     const data = await fetchAssessments({
