@@ -357,14 +357,14 @@
             >
               <font-awesome-icon icon="fa-solid fa-eye" class="mr-1" />View
             </v-btn>
-            <v-btn
+            <!-- <v-btn
               size="x-small"
               color="warning"
               variant="tonal"
               @click="openReview('flag_review', item)"
             >
               <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="mr-1" />Start Review
-            </v-btn>
+            </v-btn> -->
           </div>
         </template>
         <template #no-data>
