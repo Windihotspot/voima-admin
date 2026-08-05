@@ -851,14 +851,14 @@
                     </div>
                   </div>
 
-                  <div class="gap-remediation" v-if="gap.remediation_action">
+                  <!-- <div class="gap-remediation" v-if="gap.remediation_action">
                     <font-awesome-icon
                       icon="fa-solid fa-lightbulb"
                       class="mr-2"
                       style="color: #7c3aed"
                     />
                     <span>{{ gap.remediation_action }}</span>
-                  </div>
+                  </div> -->
 
                   <div class="gap-footer">
                     <div class="d-flex align-center gap-3 flex-wrap">
