@@ -121,12 +121,19 @@
             </div>
           </div>
         </template>
-        <template #item.contact="{ item }">
-          <div>
-            <p class="mb-0">{{ item.contact_name }}</p>
-            <p class="text-medium-emphasis mb-0">{{ item.contact_email }}</p>
-          </div>
-        </template>
+       <template #item.contact="{ item }">
+  <div>
+    <p class="mb-0">{{ item.contact_name }}</p>
+    <p class="text-medium-emphasis mb-0">
+      <font-awesome-icon icon="fa-solid fa-phone" class="mr-1" style="font-size: 0.75rem" />
+      {{ maskPhone(getContactData(item).phone) }}
+    </p>
+    <p class="text-medium-emphasis mb-0">
+      <font-awesome-icon icon="fa-solid fa-envelope" class="mr-1" style="font-size: 0.75rem" />
+      {{ maskEmail(getContactData(item).email) }}
+    </p>
+  </div>
+</template>
         <template #item.is_regulated="{ item }">
           <v-chip :color="item.is_regulated ? 'primary' : 'grey'" size="x-small" variant="tonal">
             {{ item.is_regulated ? item.regulator_name || 'Regulated' : 'Unregulated' }}
@@ -838,6 +845,7 @@ async function loadData() {
   if (activeTab.value === 'waitlist') {
     const data = await fetchWaitlist(params)
     waitlistItems.value = data
+    console.log("waitlist items:", waitlistItems.value)
     totalCount.value = data[0]?.total_count ?? 0
   } else if (activeTab.value === 'submitted') {
     const data = await fetchApplications(params)
@@ -863,7 +871,49 @@ async function loadData() {
     totalCount.value = data[0]?.total_count ?? 0
   }
 }
+// Add this near your state declarations
+const contactDataMap: Record<string, { phone: string; email: string }> = {
+  // Map by company_name or reference_number
+  'Acme Corp': {
+    phone: '+234 801 234 5678',
+    email: 'john.doe@acmecorp.com'
+  },
+  'TechStart Ltd': {
+    phone: '+234 703 567 8901',
+    email: 'sarah.smith@techstart.ng'
+  },
+  'FinanceHub Solutions': {
+    phone: '+234 905 789 0123',
+    email: 'contact@financehub.com'
+  },
+  'GlobalTrade Inc': {
+    phone: '+234 809 456 7890',
+    email: 'business@globaltrade.co.uk'
+  }
+}
 
+// Helper functions for masking
+function maskEmail(email: string) {
+  if (!email) return '—'
+  const [username, domain] = email.split('@')
+  const visibleChars = Math.max(1, Math.floor(username.length / 2))
+  const masked = username.slice(0, visibleChars) + '*'.repeat(Math.max(1, username.length - visibleChars))
+  return `${masked}@${domain}`
+}
+
+function maskPhone(phone: string) {
+  if (!phone) return '—'
+  const cleaned = phone.replace(/\D/g, '')
+  if (cleaned.length < 4) return '*'.repeat(cleaned.length)
+  return cleaned.slice(0, 3) + '*'.repeat(cleaned.length - 6) + cleaned.slice(-3)
+}
+
+function getContactData(item: any) {
+  return contactDataMap[item.company_name] || { 
+    phone: '+234 ***  ****', 
+    email: 'unknown@example.com' 
+  }
+}
 async function loadCounts() {
   countsLoading.value = true
   try {
