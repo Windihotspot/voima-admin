@@ -1,5 +1,6 @@
 <template>
-  <div class="clients-page">
+  <MainLayout>
+     <div class="clients-page">
     <!-- Page Header -->
     <div class="page-header px-6 py-5">
       <div class="d-flex align-start justify-space-between flex-wrap gap-3">
@@ -646,6 +647,8 @@
       {{ snack.message }}
     </v-snackbar>
   </div>
+  </MainLayout>
+ 
 </template>
 
 <script setup lang="ts">
@@ -654,6 +657,7 @@ import { useClients } from '@/composables/useClients'
 import ClientDetailDrawer from '@/components/clients/ClientsDetailDrawer.vue'
 import AdminReviewDialog from '@/components/clients/AdminReviewDialog.vue'
 import AssessmentReviewPanel from '@/components/clients/AssessmentReviewPanel.vue'
+import MainLayout from '@/components/Layouts/MainLayout.vue'
 
 // ── tiny local empty state ──────────────────────────────
 const EmptyState = {
