@@ -593,27 +593,7 @@
 
     <!-- ── DETAIL DRAWER ── -->
     <ClientDetailDrawer v-model="drawerOpen" :mode="drawerMode" :item-id="drawerItemId">
-      <template #actions>
-        <template v-if="drawerMode === 'application' && drawerItemId">
-          <v-btn
-            color="success"
-            variant="tonal"
-            size="small"
-            @click="openReview('approve_app', { id: drawerItemId, company_name: 'this company' })"
-          >
-            <font-awesome-icon icon="fa-solid fa-check" class="mr-2" />Approve Application
-          </v-btn>
-          <v-btn
-            color="primary"
-            variant="tonal"
-            size="small"
-            @click="openReview('convert', { id: drawerItemId, company_name: 'this company' })"
-          >
-            <font-awesome-icon icon="fa-solid fa-sync-alt" class="mr-2" />Convert to Client
-          </v-btn>
-        </template>
-        <!-- Assessment actions are now handled inside AssessmentReviewPanel -->
-      </template>
+     
     </ClientDetailDrawer>
 
     <AdminReviewDialog
