@@ -4,7 +4,7 @@
     <!-- Header -->
     <div class="sop-header">
       <div class="sop-header-content">
-        <h1 class="sop-title">SOP Library</h1>
+        <h1 class="sop-title">Standard Operating Procedure (SOP)</h1>
         <p class="sop-subtitle">Manage and organize Standard Operating Procedures</p>
       </div>
       <button
@@ -687,7 +687,7 @@ onMounted(async () => {
 }
 
 .sop-title {
-  font-size: 1rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--gray-900);
   margin: 0;
