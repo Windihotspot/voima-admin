@@ -4,7 +4,7 @@
     <!-- Header -->
     <div class="sop-header">
       <div class="sop-header-content">
-        <h1 class="sop-title">Standard Operating Procedure (SOP)</h1>
+        <h1 class="sop-title">Standard Operating Procedure Library (SOP)</h1>
         <p class="sop-subtitle">Manage and organize Standard Operating Procedures</p>
       </div>
       <button
