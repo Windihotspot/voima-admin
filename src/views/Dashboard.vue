@@ -879,10 +879,8 @@ const contactDataMap: Record<string, { phone: string; email: string }> = {
 // Helper functions for masking
 function maskEmail(email: string) {
   if (!email) return '—'
-  const [username, domain] = email.split('@')
-  const visibleChars = Math.max(1, Math.floor(username.length / 2))
-  const masked = username.slice(0, visibleChars) + '*'.repeat(Math.max(1, username.length - visibleChars))
-  return `${masked}@${domain}`
+
+  return '*'.repeat(email.length)
 }
 
 function maskPhone(phone: string) {
