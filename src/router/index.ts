@@ -1,4 +1,5 @@
 import Dashboard from '@/views/Dashboard.vue'
+import SopLibrary from '@/views/SopLibrary.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -8,6 +9,11 @@ const router = createRouter({
       path: '/',
       name: 'dashboard',
       component: Dashboard
+    },
+    {
+      path: '/sop',
+      name: 'sop',
+      component: SopLibrary
     }
   ]
 })

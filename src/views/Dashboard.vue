@@ -1,5 +1,6 @@
 <template>
-  <div class="clients-page">
+  <MainLayout>
+     <div class="clients-page">
     <!-- Page Header -->
     <div class="page-header px-6 py-5">
       <div class="d-flex align-start justify-space-between flex-wrap gap-3">
@@ -592,27 +593,7 @@
 
     <!-- ── DETAIL DRAWER ── -->
     <ClientDetailDrawer v-model="drawerOpen" :mode="drawerMode" :item-id="drawerItemId">
-      <template #actions>
-        <template v-if="drawerMode === 'application' && drawerItemId">
-          <v-btn
-            color="success"
-            variant="tonal"
-            size="small"
-            @click="openReview('approve_app', { id: drawerItemId, company_name: 'this company' })"
-          >
-            <font-awesome-icon icon="fa-solid fa-check" class="mr-2" />Approve Application
-          </v-btn>
-          <v-btn
-            color="primary"
-            variant="tonal"
-            size="small"
-            @click="openReview('convert', { id: drawerItemId, company_name: 'this company' })"
-          >
-            <font-awesome-icon icon="fa-solid fa-sync-alt" class="mr-2" />Convert to Client
-          </v-btn>
-        </template>
-        <!-- Assessment actions are now handled inside AssessmentReviewPanel -->
-      </template>
+     
     </ClientDetailDrawer>
 
     <AdminReviewDialog
@@ -646,6 +627,8 @@
       {{ snack.message }}
     </v-snackbar>
   </div>
+  </MainLayout>
+ 
 </template>
 
 <script setup lang="ts">
@@ -654,6 +637,7 @@ import { useClients } from '@/composables/useClients'
 import ClientDetailDrawer from '@/components/clients/ClientsDetailDrawer.vue'
 import AdminReviewDialog from '@/components/clients/AdminReviewDialog.vue'
 import AssessmentReviewPanel from '@/components/clients/AssessmentReviewPanel.vue'
+import MainLayout from '@/components/Layouts/MainLayout.vue'
 
 // ── tiny local empty state ──────────────────────────────
 const EmptyState = {
@@ -895,10 +879,8 @@ const contactDataMap: Record<string, { phone: string; email: string }> = {
 // Helper functions for masking
 function maskEmail(email: string) {
   if (!email) return '—'
-  const [username, domain] = email.split('@')
-  const visibleChars = Math.max(1, Math.floor(username.length / 2))
-  const masked = username.slice(0, visibleChars) + '*'.repeat(Math.max(1, username.length - visibleChars))
-  return `${masked}@${domain}`
+
+  return '*'.repeat(email.length)
 }
 
 function maskPhone(phone: string) {
