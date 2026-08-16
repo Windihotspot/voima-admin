@@ -44,6 +44,7 @@ export const useAdminAuthStore = defineStore('adminAuth', {
 
         return true
       } catch (err: any) {
+        console.log("error:", err)
         this.error = err.message || 'Login failed. Please check your email and password.'
         return false
       } finally {

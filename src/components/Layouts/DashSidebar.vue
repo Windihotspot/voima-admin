@@ -17,12 +17,22 @@
 
       
     </ul>
+
+    <div class="">
+       <button class="signout-btn text-red" @click="signOut">
+  <i class="mdi mdi-logout"></i>
+  <span>Sign Out</span>
+</button>
+    </div>
+   
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAdminAuthStore } from '@/stores/adminAuth'
+const authStore = useAdminAuthStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -50,7 +60,8 @@ const navigateTo = (item: { nav: string; route?: string }) => {
   }
 }
 
-const signOut = () => {
+const signOut = async () => {
+  await authStore.logout()
   router.push('/')
 }
 
@@ -59,7 +70,7 @@ const menuItems = [
     nav: 'clients',
     label: 'Clients',
     icon: 'mdi mdi-account-group-outline',
-    route: '/'
+    route: '/dashboard'
   },
   {
     nav: 'sop',
@@ -73,14 +84,53 @@ const menuItems = [
 </script>
 
 <style scoped>
+.signout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-top: auto;
+  padding: 10px 12px;
+
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+
+  color: rgba(15, 23, 42, 0.65);
+  font-size: 14px;
+  font-family: inherit;
+
+  cursor: pointer;
+  text-align: left;
+
+  transition: all 0.2s ease;
+}
+
+.signout-btn i {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.signout-btn:hover {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+}
 .dash-sidebar {
   width: 260px;
   padding: 18px;
   background: #ffffff;
   min-height: 100vh;
   border-right: 1px solid #eef0f4;
-}
 
+  display: flex;
+  flex-direction: column;
+}
 /* SECTION LABEL */
 .dash-menu-section {
   font-size: 11px;
